@@ -4,13 +4,12 @@ import java.io.*;
 import java.net.*;
 import java.security.NoSuchAlgorithmException;
 
-import Testing.Pair;
-
 public class ClientThread extends Thread
 {
 	protected Socket socket;
 	protected Node ThisNode;
-	public ClientThread(Socket clientSocket, Node currentNode) 
+	
+	public ClientThread(Socket clientSocket, Node currentNode)
 	{
         this.socket = clientSocket;
         this.ThisNode= currentNode;
@@ -44,36 +43,18 @@ public class ClientThread extends Thread
 				else if (parts1[0].equals("insertreplica"))
 				{
 					out.println("OK"); // maybe it will change on depart/join
-					int Kay= Integer.parseInt(parts1[1]);
-					String key = parts1[2]; 
-					int value = Integer.parseInt(parts1[3]);
-					int startsocket = Integer.parseInt(parts1[4]);
-					String sender = parts1[5];
-					Pair<String, Integer> temp= new Pair<String, Integer>(key,value);
-					this.ThisNode.replicaList.add(temp);
-					System.out.println("I am " + this.ThisNode.id + " Key: "+ key);
-					if (Kay==1 && sender.equals("Main")) // && "linear"  MANOLIS!!!!!!!!!!!!!!!!!! .!..
-					{
-						this.ThisNode.sendRequest(startsocket, "doneinsert");
-						System.out.println("Answer from :"+ this.ThisNode.id);
-					}
-					else 
-					{
-						this.ThisNode.sendRequest(this.ThisNode.next, "insertreplica,"+ (Kay-1) + "," + key + "," + value + "," + startsocket + "," + sender);
-					}
-				
+					this.ThisNode.insertreplica(Integer.parseInt(parts1[1]),parts1[2],Integer.parseInt(parts1[3]),Integer.parseInt(parts1[4]),parts1[5]);
+					break;				
 				}
-
 				else if (parts1[0].equals("doneinsert"))
 				{
 					out.println("OK");
 					//inform main
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket, "doneinsert" );					
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "doneinsert" + "," + parts1[1] );					
 					break;
 				}
 				else if (parts1[0].equals("query"))
 				{
-					//send ACK
 					out.println("OK");
 					this.ThisNode.query(parts1[1],Integer.parseInt(parts1[2]),parts1[3]);					
 					break;
@@ -82,7 +63,7 @@ public class ClientThread extends Thread
 				{
 					out.println("OK");
 					//inform main
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket, "donequery," +parts1[1] );					
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donequery" + "," + parts1[1] );					
 					break;
 				}
 				else if (parts1[0].equals("delete"))
@@ -90,12 +71,24 @@ public class ClientThread extends Thread
 					out.println("OK");
 					this.ThisNode.delete(parts1[1],Integer.parseInt(parts1[2]));					
 					break;				
-				}				
+				}		
+				else if (parts1[0].equals("deletereplica"))
+				{
+					out.println("OK");
+					this.ThisNode.deletereplica(Integer.parseInt(parts1[1]), parts1[2], Integer.parseInt(parts1[3]));				
+					break;				
+				}
+				else if (parts1[0].equals("deleterepnode"))
+				{
+					out.println("OK");
+					this.ThisNode.deleterepnode(parts1[1], Integer.parseInt(parts1[2]));
+					break;
+				}
 				else if (parts1[0].equals("donedelete"))
 				{
 					out.println("OK");
 					//inform main
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket, "donedelete" );					
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donedelete" + "," + parts1[1] );					
 					break;
 				}
 				else if (parts1[0].equals("join"))
@@ -108,90 +101,96 @@ public class ClientThread extends Thread
 				else if (parts1[0].equals("donejoin"))
 				{
 					out.println("OK");
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket, "donejoin");
-					
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donejoin");
+					//this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donejoin" + "," + parts1[1]);
+					break;
+				}
+				else if (parts1[0].equals("fixreplicas"))
+				{
+					out.println("OK");
+					this.ThisNode.fixreplicas(Integer.parseInt(parts1[1]));
 					break;
 				}
 				else if (parts1[0].equals("depart"))
 				{
 					out.println("OK");
 					this.ThisNode.depart(parts1[1]);
-					
 					break;
 				}
 				else if (parts1[0].equals("donedepart"))
 				{
 					out.println("OK");
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket, "donedepart");
-					
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donedepart");
+					//this.ThisNode.sendRequest(this.ThisNode.getmainSocket(), "donedepart" + "," + parts1[1]);
 					break;
 				}
 				else if (parts1[0].equals("update"))
 				{					
 					if (!parts1[1].equals("NULL"))
 					{
-						this.ThisNode.next=Integer.parseInt(parts1[1]);
+						this.ThisNode.setNext(Integer.parseInt(parts1[1]));
 					}
 					if (!parts1[2].equals("NULL"))
 					{
-						this.ThisNode.previous=Integer.parseInt(parts1[2]);
+						this.ThisNode.setPrevious(Integer.parseInt(parts1[2]));
 					}
 					out.println("OK");
-					socket.close();
 					break;
 				}
 				else if (parts1[0].equals("ID"))
 				{
-					out.println("ID," + this.ThisNode.id);					
+					out.println("ID"+ "," + this.ThisNode.getID());					
 					break;
 				}
-				else if (parts1[0].equals("findkeyrange")) //find MY keyRange
+				else if (parts1[0].equals("findkeyrange")) 
 				{					
-					this.ThisNode.findkeyRange(Integer.parseInt(parts1[1]));
+					this.ThisNode.findkeyRange(Integer.parseInt(parts1[1]),Integer.parseInt(parts1[2]));
 					out.println("OK");					
 					break;
 				}
 				else if (parts1[0].equals("TellKR"))
 				{
 					int Kay = Integer.parseInt(parts1[1]);
+					String[] keyRange=this.ThisNode.getkeyRange();
 					
 					if ( Kay == 1)
 					{
-						//String msg=this.ThisNode.sendRequest(Integer.parseInt(parts1[2]),"HeadKR,"+this.ThisNode.keyRange[0] + ","+this.ThisNode.keyRange[1]);
-						out.println("HeadKR,"+this.ThisNode.keyRange[0] + ","+this.ThisNode.keyRange[1]);
+						out.println("HeadKR" + "," + keyRange[0] + "," + keyRange[1]);
 					}
 					else
 					{
-						String msg=this.ThisNode.sendRequest(this.ThisNode.previous,"TellKR," + (Kay-1));
-						out.println("HeadKR,"+msg);
-						//this.ThisNode.sendRequest(this.ThisNode.previous,"TellKR," + (Kay-1)+ ","+parts1[2]);
+						String msg=this.ThisNode.sendRequest(this.ThisNode.getPrevious(),"TellKR"+ "," + (Kay-1));
+						out.println("HeadKR" + "," + msg);
 					}
 				}
+				// THIS IS FOR TESTING ONLY, MAYBE REMOVE IT?
 				else if (parts1[0].equals("PrintKR"))
 				{
-					System.out.println("KR : "+this.ThisNode.keyRange[0] +" "+ this.ThisNode.keyRange[1]);
-					System.out.println("TKR: "+this.ThisNode.keyRangeTail[0] +" "+ this.ThisNode.keyRangeTail[1]);
+					String[] keyRange=this.ThisNode.getkeyRange();
+					System.out.println("KR : "+ keyRange[0] +" "+ keyRange[1]);
+					System.out.println("TKR: "+this.ThisNode.keyRangeTail[0] +" "+ this.ThisNode.keyRangeTail[1]); 
 					out.println("OK");					
 					break;
 				}
 				if (parts1[0].equals("print"))
 				{
+					int startnode = Integer.parseInt(parts1[1]);
 					out.println("OK");
-					if (this.ThisNode.next==this.ThisNode.leaderSocket)
+					if (this.ThisNode.getNext()==startnode)
 					{
 						//if we reached the last node (started from leader node)
-						this.ThisNode.sendRequest(this.ThisNode.next,"doneprint"+","+parts1[1]+"->"+this.ThisNode.id);	//send the full list to the leader
+						this.ThisNode.sendRequest(startnode,"doneprint" + "," +parts1[2]+"->"+this.ThisNode.getID());	//send the full list to the leader
 					}
 					else
 					{
 						//more nodes need to be written on the list
-						this.ThisNode.sendRequest(this.ThisNode.next,"print"+","+parts1[1]+"->"+this.ThisNode.id);	
+						this.ThisNode.sendRequest(this.ThisNode.getNext(),"print"+ "," + startnode + "," +parts1[2]+"->"+this.ThisNode.getID());	
 					}
 					break;
 				}
 				if (parts1[0].equals("doneprint"))
 				{
-					this.ThisNode.sendRequest(this.ThisNode.mainSocket,"doneprint"+","+parts1[1]);
+					this.ThisNode.sendRequest(this.ThisNode.getmainSocket(),"doneprint"+","+parts1[1]);
 				}
 				else					
 					break;
@@ -201,17 +200,13 @@ public class ClientThread extends Thread
 
 		catch (IOException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}		
-
 }
 	
 
