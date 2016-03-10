@@ -1,10 +1,10 @@
-KEYBOARD:
+KEYBOARD: (the ones that a user can give)
 join,(id)
 depart,(id)
 insert,(file name),(value)
-insertfile,(filename.txt - must be at same directory as "src")
-queryfile,(filename.txt - must be at same directory as "src")
-parsefile,(filename.txt - must be at same directory as "src")
+insertfile,(filename.txt - must be at same directory as "src") | for files like "insert.txt"
+queryfile,(filename.txt - must be at same directory as "src")  | for files like "query.txt"
+parsefile,(filename.txt - must be at same directory as "src")  | for files like "requests.txt"
 delete,(file name)
 query,(file name)
 query,*
