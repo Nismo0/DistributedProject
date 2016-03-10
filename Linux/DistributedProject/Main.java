@@ -1,5 +1,5 @@
 package DistributedProject;
-	import java.io.*;
+import java.io.*;
 import java.net.*;
 import java.security.*;
 import java.util.*;
@@ -7,10 +7,10 @@ import java.util.concurrent.TimeUnit;
 	
 public class Main {
 	
-	public int socketNum;
-	public int leaderSocket;
-	public int repSize=5;
-	public String strategy="linear";
+	private int socketNum;
+	private int leaderSocket;
+	private int repSize=3;
+	private String strategy="lazy"; //"linear" or "lazy"
 	private ArrayList<Triple<Process, Integer,Integer>> proc; //list with the PID,ID,Socket for each process
 	
 	public Main(int startsocket)
@@ -27,32 +27,13 @@ public class Main {
 		ProcessBuilder pb = new ProcessBuilder(Java,"-cp","bin","DistributedProject.Node",""+network.leaderSocket,"1",""+network.socketNum,""+network.leaderSocket,""+network.repSize,network.strategy);
 		pb.inheritIO(); 		// inherit IO to see the output of other programs 
 	    Process p = pb.start();
+	    TimeUnit.MILLISECONDS.sleep(1000);
 	    network.proc.add(new Triple<Process,Integer,Integer>(p,1,network.leaderSocket));
 
 	    //create the network with 10 nodes
 	    for(int i=2; i<=10; i++)
 	    {
 	    	network.join(i);	
-	    }
-	    
-	    for(int i=0; i<network.proc.size(); i++)
-	    {
-			Socket kkSocket = new Socket("localhost", network.proc.get(i).getSocket());
-	        PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));		
-			
-			out.println("findkeyrange,"+network.repSize);
-			String confirmation;
-			while ((confirmation = in.readLine()) != null) 
-			{
-				String[] parts =confirmation.split(","); 
-	            if (parts[0].equals("OK"))
-	            {
-		           	 break;
-	            }
-			}
-			kkSocket.close();
-	        
 	    }
 	    //waits for user input via keyboard
 	    network.listen();			
@@ -94,10 +75,12 @@ public class Main {
             }
             else if (parts[0].equals("doneinsert"))
             {
+            	System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("donedelete"))
             {
+            	System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("donedepart"))
@@ -123,7 +106,7 @@ public class Main {
 		BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
 		
 		String confirm;
-		out.println("print,List:");
+		out.println("print" + "," + this.leaderSocket + "," + "List:");
 		while ((confirm = in.readLine()) != null) 
 	    {
 			//request received from node
@@ -132,6 +115,7 @@ public class Main {
                 break;
             }
         }
+		
 		kkSocket.close();
 		
 		this.waitResponse();	
@@ -141,7 +125,7 @@ public class Main {
 	{
 		int nodeSocket = id+this.socketNum;
 		String Java=System.getProperty("java.home")+"/bin/java";
-		ProcessBuilder pb = new ProcessBuilder(Java,"-cp","bin","DistributedProject.Node", ""+nodeSocket ,""+id,""+this.socketNum,""+this.leaderSocket,""+this.repSize,this.strategy);
+		ProcessBuilder pb = new ProcessBuilder(Java,"-cp","bin","DistributedProject.Node",""+nodeSocket,""+id ,""+this.socketNum,""+this.leaderSocket,""+this.repSize,this.strategy);
 		pb.inheritIO();
         Process p = pb.start();
         this.proc.add(new Triple<Process, Integer,Integer>(p,id,nodeSocket));
@@ -150,8 +134,7 @@ public class Main {
         PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
         String confirm;
-        out.println("join,"+ id + "," + nodeSocket);
-        
+        out.println("join,"+ id + "," + nodeSocket);        
 		while ((confirm = in.readLine()) != null) 
 	    {
 			//request received from node
@@ -178,8 +161,7 @@ public class Main {
 				obj=temp;
 				break;
 			}
-	    }
-		
+	    }		
 		if (obj!=null){ 
 			//connect and remove the node from the network (update keyranges and prev/next fields)
 			Socket kkSocket = new Socket("localhost", this.leaderSocket);
@@ -197,7 +179,6 @@ public class Main {
 	            }
 	        }
 			kkSocket.close();
-
 			
 			this.waitResponse();
 			//kill it and remove it from array proc
@@ -285,7 +266,7 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
 		String strLine;
-
+		long startTime = System.nanoTime();
 		//Read File Line By Line
 		while ((strLine = br.readLine()) != null)   
 		{
@@ -297,6 +278,8 @@ public class Main {
 		  //insert (key,value)
 		  this.insert(key, value);
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("InsertFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -308,13 +291,16 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
 		String strLine;
-
+		
 		//Read File Line By Line
+		long startTime = System.nanoTime();
 		while ((strLine = br.readLine()) != null)   
 		{
 		  //insert (key,value)
 		  this.query(strLine);
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("QueryFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -328,6 +314,7 @@ public class Main {
 		String strLine;
 
 		//Read File Line By Line
+		long startTime = System.nanoTime();
 		while ((strLine = br.readLine()) != null)   
 		{
 		  //1)split the line on ", "
@@ -338,12 +325,18 @@ public class Main {
 		  {
 			  this.query(key);
 		  }
+		  else if (request.equals("delete"))
+		  {
+			  this.delete(key);
+		  }
 		  else if (request.equals("insert"))
 		  {
 			  int value= Integer.parseInt(parts[2]);
 			  this.insert(key, value);
 		  }
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("RequestsFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}

@@ -22,12 +22,7 @@ public class UserClientThread extends Thread
 		{
 			if (request[0].equals("join"))
 			{
-				try {
-					this.network.join(Integer.parseInt(this.request[1]));
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				this.network.join(Integer.parseInt(this.request[1]));
 			}
 			else if (request[0].equals("depart"))
 			{
@@ -78,6 +73,9 @@ public class UserClientThread extends Thread
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
