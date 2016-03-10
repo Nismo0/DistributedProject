@@ -71,7 +71,6 @@ public class Main {
             }
             else if (parts[0].equals("donejoin"))
             {
-            	//System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("doneinsert"))
@@ -86,7 +85,6 @@ public class Main {
             }
             else if (parts[0].equals("donedepart"))
             {
-            	//System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("doneprint"))
@@ -268,7 +266,7 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
 		String strLine;
-		//long startTime = System.nanoTime();
+		long startTime = System.nanoTime();
 		//Read File Line By Line
 		while ((strLine = br.readLine()) != null)   
 		{
@@ -280,8 +278,8 @@ public class Main {
 		  //insert (key,value)
 		  this.insert(key, value);
 		}
-		//long endTime = System.nanoTime();;
-		//System.out.println("Insert took " + ((endTime - startTime)/1000000) + " msec");
+		long endTime = System.nanoTime();;
+		System.out.println("InsertFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -295,11 +293,14 @@ public class Main {
 		String strLine;
 		
 		//Read File Line By Line
+		long startTime = System.nanoTime();
 		while ((strLine = br.readLine()) != null)   
 		{
 		  //insert (key,value)
 		  this.query(strLine);
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("QueryFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -313,6 +314,7 @@ public class Main {
 		String strLine;
 
 		//Read File Line By Line
+		long startTime = System.nanoTime();
 		while ((strLine = br.readLine()) != null)   
 		{
 		  //1)split the line on ", "
@@ -333,6 +335,8 @@ public class Main {
 			  this.insert(key, value);
 		  }
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("RequestsFile took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}

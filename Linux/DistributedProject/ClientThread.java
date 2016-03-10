@@ -3,6 +3,7 @@ package DistributedProject;
 import java.io.*;
 import java.net.*;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeUnit;
 
 public class ClientThread extends Thread
 {
@@ -18,6 +19,7 @@ public class ClientThread extends Thread
 	public void run() 
 	{
 		try {
+			//TimeUnit.MILLISECONDS.sleep(10);
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		    String inputLine;
@@ -205,7 +207,10 @@ public class ClientThread extends Thread
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
-		}
+		} /*catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 	}		
 }
 	
