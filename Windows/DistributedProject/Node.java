@@ -84,7 +84,6 @@ public class Node
 	        new ClientThread(clientSocket, ThisNode ).start();
 	        //client socket socket is closed at the thread
         }
-
     }	
     
     /**
@@ -332,8 +331,8 @@ public class Node
 			//lazy evaluation, the answering node is the one that either has it or it has a replica of it.
 			//Also need to check if the node is the first node (lowest hashed ID)
 			boolean isFirst = checkFirst();
-			boolean checkFirstKRlazy = (isFirst && (hashedkey.compareTo(this.keyRange[0])<=0 || hashedkey.compareTo(this.keyRange[1])>0)) && this.strategy.equals("lazy"); 
-			boolean checkOtherKRlazy = (!isFirst && (hashedkey.compareTo(this.keyRange[0])<=0 && hashedkey.compareTo(this.keyRange[1])>0)) && this.strategy.equals("lazy");
+			boolean checkFirstKRlazy = (isFirst && (hashedkey.compareTo(this.keyRange[0])<=0 || hashedkey.compareTo(this.keyRange[1])>0)) && (this.strategy.equals("lazy")||this.repSize==1); 
+			boolean checkOtherKRlazy = (!isFirst && (hashedkey.compareTo(this.keyRange[0])<=0 && hashedkey.compareTo(this.keyRange[1])>0)) && (this.strategy.equals("lazy")||this.repSize==1);
 			
 			//Also need to check if the node is in a chain where the head is the first node (lowest hashed ID)
 			boolean hasReplicaOfFirst;
@@ -347,7 +346,6 @@ public class Node
 			if (checkFirstKRlazy||checkOtherKRlazy)
 			{
 				//if an entry <key', value'> where key=key' already exists we have to return it
-				System.out.println("Files check");
 				Pair<String, Integer> queryPair;
 				queryPair=this.contains(fileList,hashedkey); // removePair might be null if the file does not exist
 				if (queryPair != null)
@@ -362,9 +360,8 @@ public class Node
 			}
 			else 
 			{
-				if (checkReplicaFirstLinear || checkReplicaOtherLinear|| checkReplicaFirstLazy || checkReplicaOtherLazy)
+				if ((checkReplicaFirstLinear || checkReplicaOtherLinear|| checkReplicaFirstLazy || checkReplicaOtherLazy) && (this.repSize >1))
 				{
-					System.out.println("Replica check "+ hasReplicaOfFirst + (hashedkey.compareTo(this.keyRange[1])<=0 || hashedkey.compareTo(this.keyRangeTail[1])>0));
 					//if an entry <key', value'> where key=key' already exists we have to return it
 					Pair<String, Integer> queryPair;
 					queryPair=this.contains(replicaList,hashedkey); // removePair might be null if the file does not exist

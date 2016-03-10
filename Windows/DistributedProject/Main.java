@@ -69,7 +69,6 @@ public class Main {
             }
             else if (parts[0].equals("donejoin"))
             {
-            	//System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("doneinsert"))
@@ -84,7 +83,6 @@ public class Main {
             }
             else if (parts[0].equals("donedepart"))
             {
-            	//System.out.println(parts[1]);
             	break;
             }
             else if (parts[0].equals("doneprint"))
@@ -264,7 +262,7 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
 		String strLine;
-		//long startTime = System.nanoTime();
+		long startTime = System.nanoTime();
 		//Read File Line By Line
 		while ((strLine = br.readLine()) != null)   
 		{
@@ -276,8 +274,8 @@ public class Main {
 		  //insert (key,value)
 		  this.insert(key, value);
 		}
-		//long endTime = System.nanoTime();;
-		//System.out.println("Insert took " + ((endTime - startTime)/1000000) + " msec");
+		long endTime = System.nanoTime();;
+		System.out.println("Insert took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -289,13 +287,15 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
 
 		String strLine;
-		
+		long startTime = System.nanoTime();
 		//Read File Line By Line
 		while ((strLine = br.readLine()) != null)   
 		{
 		  //insert (key,value)
 		  this.query(strLine);
 		}
+		long endTime = System.nanoTime();;
+		System.out.println("Query took " + ((endTime - startTime)/1000000) + " msec");
 		//Close the input stream
 		br.close();
 	}
@@ -370,8 +370,3 @@ public class Main {
 	    }
 	}
 }
-
-/*TODO out.close();
-in.close();
-clientSocket.close();
-serverSocket.close();*/
